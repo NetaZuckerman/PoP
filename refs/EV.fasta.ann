@@ -1,0 +1,117 @@
+428664 58 11
+0 AY560657.1 display_name=WPV1
+0 7412 0
+0 AF111953.2 display_name=WPV1
+7412 7412 0
+0 AY278553.1 display_name=WPV1
+14824 7404 0
+0 V01149.1 display_name=WPV1
+22228 7408 0
+0 V01148.1 display_name=WPV1
+29636 7400 0
+0 M12197.1 display_name=WPV2
+37036 7407 0
+0 AY238473.1 display_name=WPV2
+44443 7407 0
+0 K01392.1 display_name=WPV3
+51850 7399 0
+0 X04468.1 display_name=WPV3
+59249 7403 0
+0 FJ914252.2 display_name=WPV3
+66652 7403 0
+0 KY941934.1 display_name=WPV3
+74055 7400 0
+0 FJ842158.1 display_name=WPV3
+81455 7400 0
+0 AF499635.1 display_name=NonPolioEV species=CoxsackieA1
+88855 7364 0
+0 JX174177.1 display_name=NonPolioEV species=CoxsackieA1
+96219 7364 0
+0 AF499636.1 display_name=NonPolioEV species=CoxsackieA11
+103583 7421 1
+0 JF260919.1 display_name=NonPolioEV species=CoxsackieA11
+111004 7422 0
+0 AF465511.1 display_name=NonPolioEV species=CoxsackieA13
+118426 7426 0
+0 AF499637.1 display_name=NonPolioEV species=CoxsackieA13
+125852 7426 0
+0 AF499639.1 display_name=NonPolioEV species=CoxsackieA17
+133278 7425 0
+0 JF260925.1 display_name=NonPolioEV species=CoxsackieA17
+140703 7424 1
+0 AF499641.1 display_name=NonPolioEV species=CoxsackieA19
+148127 7377 0
+0 AF499642.1 display_name=NonPolioEV species=CoxsackieA20
+155504 7404 0
+0 AF465514.1 display_name=NonPolioEV species=CoxsackieA20
+162908 7404 0
+0 EF015021.1 display_name=NonPolioEV species=CoxsackieA20a
+170312 7405 1
+0 DQ358078.1 display_name=NonPolioEV species=CoxsackieA20a
+177717 7412 0
+0 EF015019.1 display_name=NonPolioEV species=CoxsackieA20b
+185129 7406 0
+0 KT161266.1 display_name=NonPolioEV species=CoxsackieA21
+192535 7373 0
+0 AF546702.1 display_name=NonPolioEV species=CoxsackieA21
+199908 7373 0
+0 AF465515.1 display_name=NonPolioEV species=CoxsackieA21
+207281 7373 0
+0 D00538.1 display_name=NonPolioEV species=CoxsackieA21
+214654 7369 0
+0 AF499643.1 display_name=NonPolioEV species=CoxsackieA22
+222023 7375 0
+0 JN542510.1 display_name=NonPolioEV species=CoxsackieA22
+229398 7371 0
+0 EF026081.1 display_name=NonPolioEV species=CoxsackieA24
+236769 7426 0
+0 JN228097.1 display_name=NonPolioEV species=CoxsackieA24
+244195 7427 0
+0 AB769164.2 display_name=NonPolioEV species=CoxsackieA24v
+251622 7428 0
+0 AB769162.2 display_name=NonPolioEV species=CoxsackieA24v
+259050 7428 0
+0 MK512668.1 display_name=NonPolioEV species=EVC96
+266478 7438 0
+0 MK512667.1 display_name=NonPolioEV species=EVC96
+273916 7436 0
+0 KT946713.1 display_name=NonPolioEV species=EVC99
+281352 7423 0
+0 MK689071.1 display_name=NonPolioEV species=EVC99
+288775 7385 95
+0 EF555645.1 display_name=NonPolioEV species=EVC102
+296160 7405 0
+0 JX982259.1 display_name=NonPolioEV species=EVC104
+303565 7375 0
+0 AB686524.1 display_name=NonPolioEV species=EVC104
+310940 7375 0
+0 MH229997.1 display_name=NonPolioEV species=EVC105
+318315 7306 0
+0 KX276189.1 display_name=NonPolioEV species=EVC105
+325621 7260 0
+0 MH128993.1 display_name=NonPolioEV species=EVC109
+332881 7321 0
+0 GQ865517.1 display_name=NonPolioEV species=EVC109
+340202 7320 0
+0 KC344834.1 display_name=NonPolioEV species=EVC113
+347522 7329 0
+0 KC344833.1 display_name=NonPolioEV species=EVC113
+354851 7318 1
+0 JX514942.1 display_name=NonPolioEV species=EVC116
+362169 7371 1
+0 JX262382.1 display_name=NonPolioEV species=EVC117
+369540 7329 0
+0 JX961708.1 display_name=NonPolioEV species=EVC118
+376869 7324 0
+0 JX678288.1 display_name=NonPolioEV species=EVC118
+384193 7327 0
+0 AY184219.1 display_name=Sabin1-related
+391520 7408 0
+0 AY184220.1 display_name=Sabin2-related
+398928 7407 0
+0 AY184221.1 display_name=Sabin3-related
+406335 7399 0
+0 nOPV2-1b display_name=nOPV2
+413734 7468 0
+0 H2453 display_name=nOPV2
+421202 7462 1
