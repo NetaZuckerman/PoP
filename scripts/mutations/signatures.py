@@ -153,7 +153,6 @@ def aa_sum(df, sequences):
         else:
             df.at[index,"R/S"] =  "S"
 
-
 def get_single_aa(seq, position, region):
     '''
     find the translation of a codon by the reading frame of the gene.
@@ -198,11 +197,11 @@ def get_single_aa(seq, position, region):
         
         mod = pos_on_gene % 3
         if mod == 0:  # third nuc on the codon
-            codon_pos = (position -2 , position - 1, position)
+            codon_pos = (position, position + 1, position + 2)
         if mod == 1:  # first nuc on the codon
-            codon_pos = (position , position + 1, position + 2)
+            codon_pos = (position -1 , position, position + 1)
         if mod == 2:  # second nuc on the codon
-            codon_pos = (position - 1, position, position + 1)
+            codon_pos = (position - 2, position -1, position)
             
         codon = seq[codon_pos[0]] + seq[codon_pos[1]] + seq[codon_pos[2]]
     

@@ -12,7 +12,7 @@ library(stringr)
 library(readxl)
 library(reshape2)
 library(DT)
-path = "/mnt/project1/projects/POLIO/DDNS_protocol/DDNS_on_going_val/RUN1/batch1_1_jan/PoP_runs/filter_min1000_max1300/reports/"
+path = "/mnt/project1/projects/POLIO/DDNS_protocol/DDNS_on_going_val/RUN2/PoP_output/reports/"
 qc = read_excel(paste(path,"reports.xlsx",sep = ""),sheet = "General_QC")
 s1_qc = read_excel(paste(path,"reports.xlsx",sep = ""),sheet = "Sabin1")
 s2_qc = read_excel(paste(path,"reports.xlsx",sep = ""),sheet = "Sabin2")

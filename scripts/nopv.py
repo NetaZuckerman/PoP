@@ -97,7 +97,7 @@ def remove_fp_del(mut_list, mut_str):
         
     return new_mut_list
     
-def lester_format(muttbl, ref_name):
+def lester_format(muttbl, ref_name, atten):
     '''
     this section is for Lester. 
     it generates the yellow and the green part of Lester's table    
@@ -114,12 +114,16 @@ def lester_format(muttbl, ref_name):
     '''
     
     final_table = pd.DataFrame()
-
+    counts= pd.DataFrame() # will be used as a mutation counter for some categories 
+    num_seq = int((len(muttbl.columns) - 6) /2)
+    muttbl.iloc[:, 3:3 + num_seq] = muttbl.iloc[:, 3:3 + num_seq].replace(['T'], 'U')
+    
     for col_name in muttbl:
         if col_name.endswith("_NT") and not col_name == ref_name + "_NT":
-            muttbl[col_name + "_temp"] = np.where(muttbl[ref_name+ "_NT"] ==  muttbl[col_name]  , None ,muttbl[ref_name+ "_NT"] + muttbl["nt_position_on_genome"].astype(str) + muttbl[col_name] )
             #change all T's to U's as this its a rna virus
             muttbl[col_name] = muttbl[col_name].replace(['T'], 'U')
+            
+            muttbl[col_name + "_temp"] = np.where(muttbl[ref_name+ "_NT"] ==  muttbl[col_name]  , None ,muttbl[ref_name+ "_NT"] + muttbl["nt_position_on_genome"].astype(str) + muttbl[col_name] )
             
         if col_name.endswith("_AA") and not col_name == ref_name + "_AA":
             muttbl[col_name + "_temp"] = np.where(muttbl[ref_name + "_AA"] ==  muttbl[col_name]  , None ,\
@@ -139,6 +143,10 @@ def lester_format(muttbl, ref_name):
             nonsyn = nonsyn[nonsyn != np.array(None)].tolist() #remove None, cast to list
             nonsyn = [x for x in nonsyn if not str(x) == "nan"]  #remove None, cast to list
 
+            #count mutations
+            mut_count = len(syn) + len(nonsyn) #all mutations        
+            vp1_muts = len(get_mut_in_range(syn, 2543, 3445, "-syn") + get_mut_in_range(nonsyn, 2543, 3445, "-nonsyn"))
+            
             syn = remove_fp_del(syn, "-syn")
             nonsyn = remove_fp_del(nonsyn, "-nonsyn")
             
@@ -199,13 +207,21 @@ def lester_format(muttbl, ref_name):
             vp1_143 = get_mut_in_range(nonsyn, 2969, 2971, "-nonsyn")
             final_table.loc["Mutation at VP1-143",sample] = ("; ").join(vp1_143)
             
-            vp1_173 = get_mut_in_range(nonsyn,3056, 3056, "-nonsyn")
+            vp1_173 = get_mut_in_range(nonsyn,3053, 3055, "-nonsyn")
             final_table.loc["Mutation at VP1-171",sample] = ("; ").join(vp1_173)
             
-            vp1_295 = get_mut_in_range(nonsyn, 3428, 3430, "-nonsyn")
+            vp1_295 = get_mut_in_range(nonsyn, 3425, 3427, "-nonsyn")
             final_table.loc["Mutation at VP1-295",sample] = ("; ").join(vp1_295)
             
             final_table.loc["Mutations in 2C KO CRE",sample] = ("; ").join(ko_cre_mut)
+            
+            #get list of decreas and increase attenuation  
+            dec_pos  = atten[atten["attenuation_type"] == "Decrease "]['nt_position_on_genome'].unique()
+            inc_pos = atten[atten["attenuation_type"] == "Increase "]['nt_position_on_genome'].unique()
+            
+            #get decreas and increase attenuation in this sample
+            dec_mut = [x for x in syn+nonsyn+utrs if int(x.split("-")[0][1:-1]) in dec_pos]
+            inc_mut = [x for x in syn+nonsyn+utrs if int(x.split("-")[0][1:-1]) in inc_pos]
             
             #remove muts that are shown in the previous rowsfrom syn,nonsyn lists
             nonsyn = [x for x in nonsyn if x not in (vp1_143 + vp1_173 + vp1_295 + ko_cre_mut)]
@@ -214,6 +230,19 @@ def lester_format(muttbl, ref_name):
             final_table.loc["syn",sample] =  ("; ").join(syn) 
             final_table.loc["nonSyn",sample] =  ("; ").join(nonsyn) 
             
+            
+            
+            counts.loc["all nt subtitution count",sample] =  mut_count
+            counts.loc["VP1 nt subtitution count",sample] =  vp1_muts
+        
+            counts.loc["Decrease Mutations Count",sample] = len(dec_mut)
+            counts.loc["Increase Mutations Count",sample] = len(inc_mut)
+    
+    #lester asked for 11 empty rows
+    final_table = final_table.reindex(final_table.index.tolist() + list(range(0, 11))) #empty rows
+    #merge with counts
+    final_table = pd.concat([final_table, counts], axis = 0)
+    
     
     return final_table
     
@@ -231,15 +260,19 @@ def run(fasta):
     
     muts = pd.read_excel(mut_file)
     
-    atten = atten.merge(muts, how='left', on='nt_position_on_genome').dropna(thresh=3)
+    atten_full = atten.merge(muts, how='left', on='nt_position_on_genome').dropna(thresh=3)
+    
+    
     
     writer = pd.ExcelWriter(mut_file, engine="openpyxl", mode="a", if_sheet_exists="overlay")
-    atten.to_excel(writer, index=False, sheet_name= "attenuation")
+    atten_full.to_excel(writer, index=False, sheet_name= "attenuation")
     writer.save()
     
     muttbl = pd.read_excel("reports/mutations.xlsx", "nOPV_regions")
-    muttbl_w_n = pd.read_excel("reports/mutations_with_N.xlsx")
+
     with open(reference) as f:
         ref_name = f.readline().replace(">","").split(" ")[0]
-    lester_format(muttbl, ref_name).to_csv(mut_file.replace("mutations.xlsx", "nOPV_mutations_attenuations.csv"))
+    
+    lester_df = lester_format(muttbl, ref_name, atten)
+    lester_df.to_csv(mut_file.replace("mutations.xlsx", "nOPV_mutations_attenuations.csv"))
     

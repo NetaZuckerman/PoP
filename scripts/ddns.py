@@ -5,11 +5,6 @@ Created on Mon Feb 20 12:13:32 2023
 
 @author: hagar
 """
-
-
-MIN_READ_LEN = 1000
-MAX_READ_LEN = 1300
-
 import pandas as pd 
 from pathlib import Path
 import csv
@@ -19,12 +14,7 @@ import os
 import pysam
 from io import StringIO
 from statistics import mean
-import gzip
 from scripts.mutations.signatures import run_ddns
-from Bio import SeqIO
-
-
-
 
 def get_barcode_name(barcode_csv):
     
@@ -36,40 +26,9 @@ def get_barcode_name(barcode_csv):
     
 
 
-
-def filter_reads_by_length(dir_in,reads_out):
-    
-    for barcode in os.listdir(dir_in):
-        if not barcode == "unclassified" and not barcode == reads_out:
-       
-            if not os.path.exists(reads_out + barcode):
-                os.mkdir(reads_out + barcode)
-                
-            for f in os.listdir(dir_in + barcode):
-                fastq_records = []
-                with open(reads_out + barcode + "/" + f,"w") as fw:
-                    if f.endswith(".gz"):
-                            with gzip.open(os.path.join(dir_in + barcode, f), "rt") as handle:
-                                for record in SeqIO.parse(handle, "fastq"):
-                                    length = len(record)
-                                    if length > MIN_READ_LEN and length < MAX_READ_LEN:
-                                        fastq_records.append(record)
-                                        
-        
-                    elif f.endswith(".fastq") or f.endswith(".fq"):
-                        for record in SeqIO.parse(os.path.join(dir_in + barcode,f),"fastq"):
-                            length = len(record)
-                            if length > MIN_READ_LEN and length < MAX_READ_LEN:
-                                fastq_records.append(record)
-        
-                    SeqIO.write(fastq_records,fw, "fastq")
-
-
-
-
-
-
 def minimap(fastq_path, reference, barcodes, output):
+    minimap = "minimap2 -ax map-ont %(ref)s %(fastq_dir)s/*.fastq* | \
+                samtools view -bS -F 4 | samtools sort > %(output)s.bam"
     minimap = "minimap2 -ax map-ont %(ref)s %(fastq_dir)s/*.fastq* | \
                 samtools sort > %(output)s.bam"
     split = "bamtools split -in %(bam)s.bam -reference"
@@ -94,7 +53,7 @@ def depth(output):
 
 def cns(output):
     for bam in os.listdir(output+"BAM/"):
-        if "REF" in bam and not "bai" in bam and not "unmapped" in bam:
+        if "REF" in bam:
             sample = bam.split(".bam")[0]
             ivar_cns = "samtools mpileup -A %(bam)s.bam | ivar consensus -t 0.6 -m 1 -p %(cns)s.fa"
             ivar_cns5 = "samtools mpileup -A %(bam)s.bam | ivar consensus -t 0.6 -m 5 -p %(cns)s.fa"
@@ -113,13 +72,7 @@ def align(s1_ref, s2_ref, s3_ref, output):
     mafft(output+"alignment/sabin1_not_aligned.fasta", s1_ref, output+"alignment/sabin1_aligned.fasta")     
     mafft(output+"alignment/sabin2_not_aligned.fasta", s2_ref, output+"alignment/sabin2_aligned.fasta")
     mafft(output+"alignment/sabin3_not_aligned.fasta", s3_ref, output+"alignment/sabin3_aligned.fasta")
-    
-  #  subprocess.call("cat " + output+"CNS5/*REF_Poliovirus1* > " + output + "alignment/'wt1_not_aligned.fasta", shell=True)
-   # subprocess.call("cat " + output+"CNS5/*REF_Poliovirus2-wt* > " + output + "alignment/wt2_not_aligned.fasta", shell=True)
-   # subprocess.call("cat " + output+"CNS5/*REF_Poliovirus3-wt* > " + output + "alignment/wt3_not_aligned.fasta", shell=True)
-   # mafft(output+"alignment/wt1_not_aligned.fasta", s1_ref, output+"alignment/wt1_aligned.fasta")     
-   # mafft(output+"alignment/wt2_not_aligned.fasta", s2_ref, output+"alignment/wt2_aligned.fasta")
-   # mafft(output+"alignment/wt3_not_aligned.fasta", s3_ref, output+"alignment/wt3_aligned.fasta")
+
 
 def get_stat(depth_file, sample, stat, ref):
     
@@ -224,21 +177,16 @@ def run(fastq_path, barcode_csv, output):
     s1_ref = par_dir + "/refs/VP1_sabin1.fasta"
     s2_ref = par_dir + "/refs/VP1_sabin2.fasta"
     s3_ref = par_dir + "/refs/VP1_sabin3.fasta"
-  #  create_dirs([fastq_path + "min_900/", output+"BAM/", output+"depth/", output+"CNS/", output+"CNS5/", output+"alignment/", output + "reports/"])
+    # create_dirs([output+"BAM/", output+"depth/", output+"CNS/", output+"CNS5/", output+"alignment/", output + "reports/"])
     barcodes = get_barcode_name(barcode_csv)
-  #  filter_reads_by_length(fastq_path,fastq_path + "min_900/", )
-    fastq_path = fastq_path + "min_900/"
-   # minimap(fastq_path, reference, barcodes, output)
-   # depth(output)
-   # cns(output)
+    # minimap(fastq_path, reference, barcodes, output)
+    depth(output)
+    cns(output)
     align(s1_ref, s2_ref, s3_ref, output)
-   # QC_reports(barcodes, output)
+    QC_reports(barcodes, output)
     
     run_ddns(output + "alignment/sabin1_aligned.fasta" ,par_dir + "/refs/sabin1.csv", output + "reports/sabin1_mutations.xlsx")
     run_ddns(output + "alignment/sabin2_aligned.fasta" ,par_dir + "/refs/sabin2.csv", output + "reports/sabin2_mutations.xlsx")
     run_ddns(output + "alignment/sabin3_aligned.fasta" ,par_dir + "/refs/sabin3.csv", output + "reports/sabin3_mutations.xlsx")
     
-#    run_ddns(output + "alignment/wt1_aligned.fasta" ,par_dir + "/refs/sabin1.csv", output + "reports/wt1_mutations.xlsx")
- #   run_ddns(output + "alignment/wt2_aligned.fasta" ,par_dir + "/refs/sabin2.csv", output + "reports/wt2_mutations.xlsx")
-  #  run_ddns(output + "alignment/wt3_aligned.fasta" ,par_dir + "/refs/sabin3.csv", output + "reports/wt3_mutations.xlsx")    
 
