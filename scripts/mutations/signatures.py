@@ -16,13 +16,15 @@ The code will find the mutations of the sequences and present it ordered by gene
 ----------------------------------------------------------------------------------------------
 
 """
-import sys
-sys.path.insert(1, '/home/hagar/PoP/')
+import sys 
+import os
+MAIN_SCIPT_DIR = os.path.dirname(__file__)+'/../'
+sys.path.insert(1, MAIN_SCIPT_DIR)
 from sys import argv
 from math import floor
 import pandas as pd
 from Bio.Seq import Seq
-from utils.utils import translate_table, get_sequences, mutations_positions
+from utils.utils import translate_table, get_sequences
 from utils.format_xl import save_format_xl
 ambiguous_nucleotides = ["W", "Y", "R", "S", "D","K","M","V","H","B","X"]
 
@@ -46,7 +48,7 @@ def mutations_by_sample(mutations_position,sequences):
     for sample, record in sequences.items():
         mutations = []
         for pos in mutations_position:
-            mutations.append(record[pos])
+            mutations.append(record[pos-1])
         mutations_by_sample[sample] = mutations
     return mutations_by_sample
 
@@ -106,7 +108,7 @@ def get_gene(mutations_positions_nt, regions):
             end = pos[1]
             if mut in range(start,end):
                 gene_name = gene
-                pos_gene_nt = mut-start + 2
+                pos_gene_nt = mut-start + 1
                 pos_gene_aa = floor(pos_gene_nt/3) if pos_gene_nt%3 == 0 else  floor(pos_gene_nt/3) + 1
         gene_names.append(gene_name)
         position_on_gene_nt.append(pos_gene_nt)
@@ -193,7 +195,7 @@ def get_single_aa(seq, position, region):
         codon = str(Seq(codon).complement())
     else:
         
-        pos_on_gene = position - start + 1
+        pos_on_gene = position - start 
         
         mod = pos_on_gene % 3
         if mod == 0:  # third nuc on the codon
@@ -202,15 +204,14 @@ def get_single_aa(seq, position, region):
             codon_pos = (position -1 , position, position + 1)
         if mod == 2:  # second nuc on the codon
             codon_pos = (position - 2, position -1, position)
-            
-        codon = seq[codon_pos[0]] + seq[codon_pos[1]] + seq[codon_pos[2]]
+        
+        codon = seq[codon_pos[0]-1] + seq[codon_pos[1]-1] + seq[codon_pos[2]-1]
     
     if codon in translate_table:
         aa = translate_table[codon] if not '-' in codon and not 'N' in codon else 'X'
     else:
         aa = 'X'
     return aa
-
 
 def get_all_aa(mutations_positions_nt, sequences, gene_names, regions):
     '''
@@ -233,7 +234,7 @@ def get_all_aa(mutations_positions_nt, sequences, gene_names, regions):
     for sample, seq in sequences.items():
         sample_aa = []
         for i in range(len(mutations_positions_nt)):
-            if gene_names[i].endswith('UTR'):
+            if 'UTR' in gene_names[i] :
                 sample_aa.append('X')
             else:
                 pos = mutations_positions_nt[i]
@@ -244,81 +245,84 @@ def get_all_aa(mutations_positions_nt, sequences, gene_names, regions):
 
     return mutations_by_sample_aa
     
+def drop_low_qc(seqs, thresh=70):
+    new_seqs = {}
+    for sample, seq in seqs.items():
+        no_cover = (seq.count('N') + seq.count('-') + seq.count('n'))
+        if (no_cover / len(seq)) * 100 < thresh:
+            new_seqs[sample] = seq
+            
+    return new_seqs
 
 
-def run_ddns(alignment_file,regions_csv,output):
+def only_show_snp(df):
+    '''
+    count samples with snp's in each position, and drop positions with 0 snp's.
+
+    Parameters
+    ----------
+    df : pandas.Dataframe
+        the mutation table.
+
+    Returns
+    -------
+    df : pandas.Dataframe
+        the filtered mutation table
+
+    '''
+    col_list = [col for col in df.columns if col.endswith('_NT')]
+    col_0_array = df[col_list[0]].values  # Convert to numpy array
+    df['SNPs_count'] = ((df[col_list[1:]].values != col_0_array[:, None]) & (df[col_list[1:]] != 'N') & (df[col_list[1:]] != '-')).sum(axis=1)
+    df = df[df['SNPs_count'] > 0]
+
+    return df
+
+
+def run(alignment_file,regions_csv,output, show_all =  False):
+    
+    
+    '''
+    run all functions.
+
+    '''
+    
+    sequences = get_sequences(alignment_file)
+    # sequences = drop_low_qc(sequences)
+    
+    df = pd.DataFrame()
+    seq_len= len(list(sequences.values())[0])
+    mutations_positions_nt = range(1, seq_len+1, 1)
+    mutations_by_sample_nt = mutations_by_sample(mutations_positions_nt,sequences)
+    
+    if type(regions_csv)==type(None) or regions_csv == "": 
+        if not seq_len%3 == 0:
+            raise ValueError("Error: Invalid Reference Sequence Length. \n reference sequence must be divisible by 3 for mutation table calculation.")
+        regions = {"unknown": (1,seq_len,'+')}
+    else:    
+        regions = get_regions(regions_csv)
         
-    
-    '''
-    run all functions.
-
-    '''
-    sheet_name = regions_csv.split("/")[-1].split(".csv")[0]
-    sequences = get_sequences(alignment_file)
-    mutations_positions_nt = mutations_positions(sequences,1)
-    mutations_by_sample_nt = mutations_by_sample(mutations_positions_nt,sequences)
-    regions = get_regions(regions_csv)
     gene_names, position_on_gene_nt, position_on_gene_aa = get_gene(mutations_positions_nt, regions)
-    get_all_aa(mutations_positions_nt, sequences, gene_names, regions)
-    
-    mutations_by_sample_aa = get_all_aa(mutations_positions_nt, sequences, gene_names, regions)
-    
-    
-    df = pd.DataFrame()
-    df["nt_position_on_gene"] = position_on_gene_nt
-    df.insert(0, "gene_name", "VP1")
-    df["nt_position_on_genome"] = mutations_positions_nt 
-    df["nt_position_on_genome"] =df["nt_position_on_genome"] + 1 + regions["VP1"][0]
-    for sample, mut in mutations_by_sample_nt.items():
-        df[sample+"_NT"] = mut
-    df["aa_position_on_gene"] = position_on_gene_aa
-    for sample, mut in mutations_by_sample_aa.items():
-        df[sample+"_AA"] = mut    
-    
-    aa_sum(df, sequences)
-    save_format_xl(df, len(sequences)-1, output, sheet_name)
-    
-    
-def run(alignment_file,regions_csv,output, noN = 0):
-            
-    
-    '''
-    run all functions.
-    Parameters:
-        noN: ignore N's and gups in mutation analysis if noN=1. 
-        default = 0
-            
-        analysing N's and gaps option is made for nOPV2.
-        why? nOPV2 5'UTR is longer than the other polioviruses
-        if you see N's in this region you should suspect its nOPV2
-    '''
-    sheet_name = regions_csv.split("/")[-1].split(".csv")[0]
-    sequences = get_sequences(alignment_file)
-    mutations_positions_nt = mutations_positions(sequences,noN)
-    mutations_by_sample_nt = mutations_by_sample(mutations_positions_nt,sequences)
-    regions = get_regions(regions_csv)
-    gene_names, position_on_gene_nt, position_on_gene_aa = get_gene(mutations_positions_nt, regions)
-    get_all_aa(mutations_positions_nt, sequences, gene_names, regions)
-    
-    mutations_by_sample_aa = get_all_aa(mutations_positions_nt, sequences, gene_names, regions)
-    
-    
-    df = pd.DataFrame()
     df["gene_name"] = gene_names
-    df["nt_position_on_gene"] = position_on_gene_nt
+    df["nt_position_on_gene"] = position_on_gene_nt 
     df["nt_position_on_genome"] = mutations_positions_nt
-    df["nt_position_on_genome"] += 1
+    
+    mutations_by_sample_aa = get_all_aa(mutations_positions_nt, sequences, gene_names, regions)
+
     for sample, mut in mutations_by_sample_nt.items():
         df[sample+"_NT"] = mut
+    
     df["aa_position_on_gene"] = position_on_gene_aa
     for sample, mut in mutations_by_sample_aa.items():
         df[sample+"_AA"] = mut    
-    
+   
     aa_sum(df, sequences)
-    save_format_xl(df, len(sequences)-1, output, sheet_name)
-
     
+    if not show_all:
+        df = only_show_snp(df)
+        
+    sheet_name = regions_csv.split("/")[-1].split(".csv")[0]
+    save_format_xl(df, len(sequences)-1, output,sheet_name)
+
     
 if __name__ == "__main__":
     run(argv[1], argv[2], argv[3])
-    

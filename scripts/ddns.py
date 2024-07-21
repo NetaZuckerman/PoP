@@ -14,7 +14,7 @@ import os
 import pysam
 from io import StringIO
 from statistics import mean
-from scripts.mutations.signatures import run_ddns
+from scripts.mutations import signatures
 
 def get_barcode_name(barcode_csv):
     
@@ -177,16 +177,16 @@ def run(fastq_path, barcode_csv, output):
     s1_ref = par_dir + "/refs/VP1_sabin1.fasta"
     s2_ref = par_dir + "/refs/VP1_sabin2.fasta"
     s3_ref = par_dir + "/refs/VP1_sabin3.fasta"
-    # create_dirs([output+"BAM/", output+"depth/", output+"CNS/", output+"CNS5/", output+"alignment/", output + "reports/"])
+    create_dirs([output+"BAM/", output+"depth/", output+"CNS/", output+"CNS5/", output+"alignment/", output + "reports/"])
     barcodes = get_barcode_name(barcode_csv)
-    # minimap(fastq_path, reference, barcodes, output)
+    minimap(fastq_path, reference, barcodes, output)
     depth(output)
     cns(output)
     align(s1_ref, s2_ref, s3_ref, output)
     QC_reports(barcodes, output)
     
-    run_ddns(output + "alignment/sabin1_aligned.fasta" ,par_dir + "/refs/sabin1.csv", output + "reports/sabin1_mutations.xlsx")
-    run_ddns(output + "alignment/sabin2_aligned.fasta" ,par_dir + "/refs/sabin2.csv", output + "reports/sabin2_mutations.xlsx")
-    run_ddns(output + "alignment/sabin3_aligned.fasta" ,par_dir + "/refs/sabin3.csv", output + "reports/sabin3_mutations.xlsx")
+    signatures.run(output + "alignment/sabin1_aligned.fasta" ,par_dir + "/refs/sabin1.csv", output + "reports/sabin1_mutations.xlsx")
+    signatures.run(output + "alignment/sabin2_aligned.fasta" ,par_dir + "/refs/sabin2.csv", output + "reports/sabin2_mutations.xlsx")
+    signatures.run(output + "alignment/sabin3_aligned.fasta" ,par_dir + "/refs/sabin3.csv", output + "reports/sabin3_mutations.xlsx")
     
 

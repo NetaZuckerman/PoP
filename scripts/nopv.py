@@ -253,8 +253,8 @@ def run(fasta):
     mut_file = "reports/mutations.xlsx"
     mafft(fasta, reference, "alignment/all_aligned.fasta")
     
-    signatures.run("alignment/all_aligned.fasta", regions, "reports/mutations.xlsx",noN = 1)
-    signatures.run("alignment/all_aligned.fasta", regions, "reports/mutations_with_N.xlsx",noN = 0)
+    signatures.run("alignment/all_aligned.fasta", regions, "reports/mutations.xlsx",show_all = False)
+    signatures.run("alignment/all_aligned.fasta", regions, "reports/mutations_with_N.xlsx",show_all = True)
 
     atten = pd.read_csv(MAIN_SCIPT_DIR + "refs/nOPV2_Attenuation_Mutations.csv")
     
@@ -266,7 +266,7 @@ def run(fasta):
     
     writer = pd.ExcelWriter(mut_file, engine="openpyxl", mode="a", if_sheet_exists="overlay")
     atten_full.to_excel(writer, index=False, sheet_name= "attenuation")
-    writer.save()
+    writer.close()
     
     muttbl = pd.read_excel("reports/mutations.xlsx", "nOPV_regions")
 

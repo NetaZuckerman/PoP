@@ -81,6 +81,6 @@ def save_format_xl(df,num_samples,output, sheet_name):
                                        'format':   yellow_format})
 
 
-    writer.save()
+    writer.close()
 
 
